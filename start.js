@@ -1,9 +1,11 @@
 const dgram = require("dgram"),
     net = require("os").networkInterfaces();
 
+// show the network(s) the device is on and thus monitoring
 for (it in net) {
     for (ip of net[it])
-        if (!ip.internal) console.log(ip.family, "network:", ip.cidr);
+        if (!ip.internal && ip.family == "IPv4")
+            console.log(ip.family, "network:", ip.cidr);
 }
 
 const sock = dgram.createSocket("udp4");
@@ -62,7 +64,7 @@ function parseDHCP(buff) {
     };
     for (op in opts) if (map[op]) opte[map[op][0]] = map[op][1](opts[op]);
     console.log(opte);
-    //write(opte);
+    if (process.argv[2] == "save") write(opte); //write to file if specified
 }
 sock.on("close", () => console.log("close"));
 sock.on("listening", () => console.log("listening"));
@@ -71,7 +73,7 @@ sock.bind(67, () => sock.setBroadcast(true));
 
 function write(obj) {
     require("fs").appendFileSync(
-        "./inf",
+        "./DHCP-cap",
         JSON.stringify(obj, null, "  ") + "\n"
     );
 }
